@@ -3,8 +3,16 @@ import os
 import sys
 import argparse
 import re
+import textwrap
 from stat import *
 from datetime import date
+
+
+# contants
+VER = \
+      'keepy V0.01\n'\
+      'Only keep the last x days/months/years\' specific files '\
+      'automatically.'
 
 
 def keepy(path, filereg, timeType, distance, today):
@@ -20,17 +28,32 @@ def keepy(path, filereg, timeType, distance, today):
             if (today - f_mtime).days > distance:
                 delist.append(pathname)
         if timeType == 'month':
-            pass
+            if ((today.year-f_mtime.year)*12 
+                  + (today.month - f_mtime.month)) > distance:
+                delist.append(pathname)
         if timeType == 'year':
-            pass
+            if (today.year - f_mtime.year) > distance:
+                delist.append(pathname)
     else:
-        print(delist)
+        delist.sort()
+        if len(delist) == 0:
+            print('No file need to be delete. Keep them all.')
+            return
+        # delete process
+        print('Files ('+str(len(delist))+') to delete:')
+        for item in delist: print(item)
+        confirm = input('Are you sure to delete (Yes/...)?')
+        if re.match('Yes$', confirm.strip()):
+            for item in delist: os.remove(item)
+            print('Delete complete.')
+        else:
+            print('Delete Aborted.')
 
 
 def pInt(string):
     try:
         num = int(string)
-        if num <= 0:
+        if num < 0:
             raise argparse.ArgumentTypeError(
                         'Here must be a positive integer.')
     except argparse.ArgumentTypeError:
@@ -42,7 +65,30 @@ def pInt(string):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class = argparse.RawDescriptionHelpFormatter,
+        description = VER + textwrap.dedent('''\n
+        Keep those you need, remove the rest by computing the date of today
+        and the mtime of files hitted by pattern.
+        
+        Usage Examples:
+
+        1), keep the last 10 days
+            $ python3 keepy.py -a /path -f pattern --day 10
+            The files whose name is hitted by the pattern will be checked. 
+            Only those whose mtime is within 10 days time from today's date
+            will be kept, the others will be deleted after your confirmation.
+            --day 0 means delete all except today's file.
+
+        2), keep the last 10 months
+            $ python3 keepy.py -a /path -f pattern --month 10
+            --month 0 means delete all except file of current month
+
+        3), keep the last 2 years
+            $ python3 keepy.py -a /path -f pattern --year 2
+            --year 0 means delete all except file of current yesr
+        ''')
+    )
     parser.add_argument('-a', '--abspath', required=True,  
             help='absolute path, support ~ expansion')
     #parser.add_argument('-m', '--mtime', required=True, action='store_true',
@@ -63,9 +109,12 @@ def main():
           or not S_ISDIR(os.stat(args.abspath).st_mode)):
         print('Path must be absolute and existed, and not be a file.')
         sys.exit(1)
-    if args.day: _timeType = 'day'; distance = args.day
-    if args.month: _timeType = 'month'; distance = args.month
-    if args.year: _timeType = 'year'; distance = args.year
+    if args.day is not None: 
+        _timeType = 'day'; distance = args.day
+    if args.month is not None: 
+        _timeType = 'month'; distance = args.month
+    if args.year is not None: 
+        _timeType = 'year'; distance = args.year
     keepy(args.abspath, args.filereg, _timeType, distance, date.today())
 
 
