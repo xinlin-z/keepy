@@ -9,8 +9,7 @@ from datetime import date
 
 
 # contants
-VER = \
-      'keepy V0.01\n'\
+VER = 'keepy V0.01\n'\
       'Only keep the last x days/months/years\' specific files '\
       'automatically.'
 
@@ -45,9 +44,9 @@ def keepy(path, filereg, timeType, distance, today):
         confirm = input('Are you sure to delete (Yes/...)?')
         if re.match('Yes$', confirm.strip()):
             for item in delist: os.remove(item)
-            print('Delete complete.')
+            print('Delete Complete!')
         else:
-            print('Delete Aborted.')
+            print('Delete Aborted!')
 
 
 def pInt(string):
@@ -87,7 +86,11 @@ def main():
         3), keep the last 2 years
             $ python3 keepy.py -a /path -f pattern --year 2
             --year 0 means delete all except file of current yesr
-        ''')
+        '''),
+        epilog = 'Keepy project page: '
+                 'https://github.com/xinlin-z/keepy\n'
+                 'Author\'s python note blog: '
+                 'https://www.pynote.net'
     )
     parser.add_argument('-a', '--abspath', required=True,  
             help='absolute path, support ~ expansion')
