@@ -14,7 +14,7 @@ VER = 'keepy V0.01\n'\
       'automatically.'
 
 
-def keepy(path, filereg, timeType, distance, today):
+def keepy(path, yes, filereg, timeType, distance, today):
     delist = []
     for f in os.listdir(path):
         # skip dir and search failed
@@ -41,12 +41,17 @@ def keepy(path, filereg, timeType, distance, today):
         # delete process
         print('Files ('+str(len(delist))+') to delete:')
         for item in delist: print(item)
-        confirm = input('Are you sure to delete (Yes/...)?')
-        if re.match('Yes$', confirm.strip()):
+        if yes:
+            print('Are you sure to delete (Yes/...)?Yes (automatically)')
             for item in delist: os.remove(item)
             print('Delete Complete!')
         else:
-            print('Delete Aborted!')
+            confirm = input('Are you sure to delete (Yes/...)?')
+            if re.match('Yes$', confirm.strip()):
+                for item in delist: os.remove(item)
+                print('Delete Complete!')
+            else:
+                print('Delete Aborted!')
 
 
 def pInt(string):
@@ -86,6 +91,10 @@ def main():
         3), keep the last 2 years
             $ python3 keepy.py -a /path -f pattern --year 2
             --year 0 means delete all except file of current yesr
+
+        4), say Yes automatically
+            $ python3 keepy.py -a /path -f pattern -y --month 3
+            -y option can say Yes automatically while delete confirmation.
         '''),
         epilog = 'Keepy project page: '
                  'https://github.com/xinlin-z/keepy\n'
@@ -94,8 +103,8 @@ def main():
     )
     parser.add_argument('-a', '--abspath', required=True,  
             help='absolute path, support ~ expansion')
-    #parser.add_argument('-m', '--mtime', required=True, action='store_true',
-    #        help='use mtime to determine if delete')
+    parser.add_argument('-y', '--yes', action='store_true',
+            help='say Yes automatically while delete confirmation')
     parser.add_argument('-f', '--filereg', required=True, 
             help='file name re expression called by re.search '
                  'to group candidate files')
@@ -118,7 +127,8 @@ def main():
         _timeType = 'month'; distance = args.month
     if args.year is not None: 
         _timeType = 'year'; distance = args.year
-    keepy(args.abspath, args.filereg, _timeType, distance, date.today())
+    keepy(args.abspath, args.yes, args.filereg,
+          _timeType, distance, date.today())
 
 
 if __name__ == '__main__':
