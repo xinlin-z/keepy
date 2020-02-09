@@ -32,8 +32,20 @@ You can find a lot usage examples and explanation in help info.
 
     $ python3 keepy.py -a /path -f file_name_pattern --year 0
 
+--year 0 means only keep current year's files.
+
+--month 0 means only keep files of this month.
+
+## say Yes automatically
+
+    $ python3 keepy.py -a /path -f pattern --day 0
+
+--day 0 means only keep today's files.
+
 # Version
 
-* **2020-02-07 V0.01**
+* **2020-02-09 V0.01**
     
     - fist release
+
+

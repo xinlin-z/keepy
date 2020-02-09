@@ -34,11 +34,11 @@ def keepy(path, yes, filereg, timeType, distance, today):
             if (today.year - f_mtime.year) > distance:
                 delist.append(pathname)
     else:
-        delist.sort()
         if len(delist) == 0:
             print('No file need to be delete. Keep them all.')
             return
         # delete process
+        delist.sort()
         print('Files ('+str(len(delist))+') to delete:')
         for item in delist: print(item)
         if yes:
