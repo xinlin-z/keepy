@@ -10,7 +10,7 @@ same path would be deleted for you automatically.
 
 Pay attention, keepy use **file mtime** to make decision!
 
-中文参考 https://www.pynote.net/archives/1797
+**中文参考 https://www.pynote.net/archives/1797**
 
 # How to Use
 
