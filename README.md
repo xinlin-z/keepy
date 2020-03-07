@@ -22,15 +22,15 @@ You can find a lot usage examples and explanation in help info.
 
 ## Only keep the last 90 days log file
 
-    $ python3 keepy.py -a /path -f ^www.access.log_ --day 90
+    $ python3 keepy.py -p path -f ^www.access.log_ --day 90
 
 ## Only keep the last 10 months db file
 
-    $ python3 keepy.py -a /path -f pynote.db.gzip$ --month 10
+    $ python3 keepy.py -p path -f pynote.db.gzip$ --month 10
 
 ## Only keep this year's file
 
-    $ python3 keepy.py -a /path -f file_name_pattern --year 0
+    $ python3 keepy.py -p path -f file_name_pattern --year 0
 
 --year 0 means only keep current year's files.
 
@@ -38,14 +38,16 @@ You can find a lot usage examples and explanation in help info.
 
 ## say Yes automatically
 
-    $ python3 keepy.py -a /path -f pattern --day 0
+    $ python3 keepy.py -p path -f pattern --day 0
 
 --day 0 means only keep today's files.
 
 # Version
 
+* **2020-03-07 V0.02**
+    - change -a to -p, which can take a relevant path argument
+
 * **2020-02-09 V0.01**
-    
     - fist release
 
 

@@ -9,7 +9,7 @@ from datetime import date
 
 
 # contants
-VER = 'keepy V0.01\n'\
+VER = 'keepy V0.02\n'\
       'Only keep the last x days/months/years\' specific files '\
       'automatically.'
 
@@ -40,7 +40,7 @@ def keepy(path, yes, filereg, timeType, distance, today):
         # delete process
         delist.sort()
         print('Files ('+str(len(delist))+') to delete:')
-        for item in delist: print(item)
+        for item in delist: print(os.path.abspath(item))
         if yes:
             print('Are you sure to delete (Yes/...)?Yes (automatically)')
             for item in delist: os.remove(item)
@@ -72,28 +72,28 @@ def main():
     parser = argparse.ArgumentParser(
         formatter_class = argparse.RawDescriptionHelpFormatter,
         description = VER + textwrap.dedent('''\n
-        Keep those you need, remove the rest by computing the date of today
-        and the mtime of files hitted by pattern.
+        Keep those you need, remove the rest by computing the distance from 
+        today to the mtime of files hitted by a regular expression pattern. 
         
         Usage Examples:
 
         1), keep the last 10 days
-            $ python3 keepy.py -a /path -f pattern --day 10
+            $ python3 keepy.py -p path -f pattern --day 10
             The files whose name is hitted by the pattern will be checked. 
             Only those whose mtime is within 10 days time from today's date
             will be kept, the others will be deleted after your confirmation.
             --day 0 means delete all except today's file.
 
         2), keep the last 10 months
-            $ python3 keepy.py -a /path -f pattern --month 10
+            $ python3 keepy.py -p path -f pattern --month 10
             --month 0 means delete all except file of current month
 
         3), keep the last 2 years
-            $ python3 keepy.py -a /path -f pattern --year 2
+            $ python3 keepy.py -p path -f pattern --year 2
             --year 0 means delete all except file of current yesr
 
         4), say Yes automatically
-            $ python3 keepy.py -a /path -f pattern -y --month 3
+            $ python3 keepy.py -p path -f pattern -y --month 3
             -y option can say Yes automatically while delete confirmation.
         '''),
         epilog = 'Keepy project page: '
@@ -101,8 +101,8 @@ def main():
                  'Author\'s python note blog: '
                  'https://www.pynote.net'
     )
-    parser.add_argument('-a', '--abspath', required=True,  
-            help='absolute path, support ~ expansion')
+    parser.add_argument('-p', '--path', required=True,  
+            help='path to folder contains those files')
     parser.add_argument('-y', '--yes', action='store_true',
             help='say Yes automatically while delete confirmation')
     parser.add_argument('-f', '--filereg', required=True, 
@@ -116,10 +116,9 @@ def main():
     timeType.add_argument('--year', type=pInt, 
             help='keep the last x years files')
     args = parser.parse_args()
-    if (not os.path.isabs(args.abspath) 
-          or not os.path.exists(args.abspath)
-          or not S_ISDIR(os.stat(args.abspath).st_mode)):
-        print('Path must be absolute and existed, and not be a file.')
+    if (not os.path.exists(args.path)
+          or not S_ISDIR(os.stat(args.path).st_mode)):
+        print('Path must be existed, and should not be a file.')
         sys.exit(1)
     if args.day is not None: 
         _timeType = 'day'; distance = args.day
@@ -127,7 +126,7 @@ def main():
         _timeType = 'month'; distance = args.month
     if args.year is not None: 
         _timeType = 'year'; distance = args.year
-    keepy(args.abspath, args.yes, args.filereg,
+    keepy(args.path, args.yes, args.filereg,
           _timeType, distance, date.today())
 
 
