@@ -3,31 +3,42 @@ import os
 import sys
 import argparse
 import re
+import shutil
 import textwrap
 from stat import *
 from datetime import date
 
 
 # contants
-VER = 'keepy V0.02\n'\
-      'Only keep the last x days/months/years\' specific files '\
-      'automatically.'
+VER = 'keepy V0.03\n'\
+      "Automatically delete files or folders, only keep(y) what you need!"
 
 
-def keepy(path, yes, filereg, timeType, distance, today):
+def keepy(path, yes, refile, refolder, timeType, distance, today):
     delist = []
+    _tstr = 'files' if refile else 'folders'
     for f in os.listdir(path):
-        # skip dir and search failed
-        if not re.search(filereg, f): continue
-        pathname = os.path.join(path, f)
-        if S_ISDIR(os.stat(pathname).st_mode): continue
+        if refile:
+            # skip folders and search failed
+            pathname = os.path.join(path, f)
+            if S_ISDIR(os.stat(pathname).st_mode):
+                continue
+            if not re.search(refile, f):
+                continue
+        if refolder:
+            # skip files and search failed
+            pathname = os.path.join(path, f)
+            if not S_ISDIR(os.stat(pathname).st_mode):
+                continue
+            if not re.search(refolder, f):
+                continue
         # get mtime and compare with now
         f_mtime = date.fromtimestamp(os.path.getmtime(pathname))
         if timeType == 'day':
             if (today - f_mtime).days > distance:
                 delist.append(pathname)
         if timeType == 'month':
-            if ((today.year-f_mtime.year)*12 
+            if ((today.year-f_mtime.year)*12
                   + (today.month - f_mtime.month)) > distance:
                 delist.append(pathname)
         if timeType == 'year':
@@ -35,20 +46,25 @@ def keepy(path, yes, filereg, timeType, distance, today):
                 delist.append(pathname)
     else:
         if len(delist) == 0:
-            print('No file need to be delete. Keep them all.')
+            print('Nothing needs to be deleted. Keep them all.')
             return
         # delete process
         delist.sort()
-        print('Files ('+str(len(delist))+') to delete:')
-        for item in delist: print(os.path.abspath(item))
+        print('['+str(len(delist))+ '] %s in the delete list:' % _tstr)
+        for item in delist:
+            print(os.path.abspath(item))
         if yes:
-            print('Are you sure to delete (Yes/...)?Yes (automatically)')
-            for item in delist: os.remove(item)
-            print('Delete Complete!')
+            print('Are you sure to delete all %s (Yes/...)?Yes' % _tstr)
+            for item in delist:
+                if refile: os.remove(item)
+                if refolder: shutil.rmtree(item)
+            print('Delete Complete Automatically!')
         else:
-            confirm = input('Are you sure to delete (Yes/...)?')
+            confirm = input('Are you sure to delete all %s (Yes/...)?'%_tstr)
             if re.match('Yes$', confirm.strip()):
-                for item in delist: os.remove(item)
+                for item in delist:
+                    if refile: os.remove(item)
+                    if refolder: shutil.rmtree(item)
                 print('Delete Complete!')
             else:
                 print('Delete Aborted!')
@@ -72,61 +88,70 @@ def main():
     parser = argparse.ArgumentParser(
         formatter_class = argparse.RawDescriptionHelpFormatter,
         description = VER + textwrap.dedent('''\n
-        Keep those you need, remove the rest by computing the distance from 
-        today to the mtime of files hitted by a regular expression pattern. 
-        
+
         Usage Examples:
 
-        1), keep the last 10 days
-            $ python3 keepy.py -p path -f pattern --day 10
-            The files whose name is hitted by the pattern will be checked. 
-            Only those whose mtime is within 10 days time from today's date
-            will be kept, the others will be deleted after your confirmation.
-            --day 0 means delete all except today's file.
+        1), keep the last 10 days' files/folders
+            $ python3 keepy.py -p path --refile pattern --day 10
+            $ python3 keepy.py -p path --refolder pattern --day 10
+            The files/folders whose name is hitted by the pattern will be
+            checked. Only those whose mtime is within 10 days time from
+            today's date will be kept, the others will be deleted after
+            your confirmation.
+            --day 0 means delete all except today's.
 
-        2), keep the last 10 months
-            $ python3 keepy.py -p path -f pattern --month 10
-            --month 0 means delete all except file of current month
+        2), keep the last 10 months' files/folders
+            $ python3 keepy.py -p path -refile pattern --month 10
+            $ python3 keepy.py -p path -refolder pattern --month 10
+            --month 0 means delete all except those of current month
 
-        3), keep the last 2 years
-            $ python3 keepy.py -p path -f pattern --year 2
-            --year 0 means delete all except file of current yesr
+        3), keep the last 2 years' files/folders
+            $ python3 keepy.py -p path --refile pattern --year 2
+            $ python3 keepy.py -p path --refolder pattern --year 2
+            --year 0 means delete all except those of current yesr
 
         4), say Yes automatically
-            $ python3 keepy.py -p path -f pattern -y --month 3
-            -y option can say Yes automatically while delete confirmation.
+            $ python3 keepy.py -p path -y --refile pattern --month 3
+            $ python3 keepy.py -p path -yes --refolder pattern --month 3
+            -y or --yes option can say Yes automatically for you, be careful.
         '''),
-        epilog = 'Keepy project page: '
+        epilog = 'keepy project page: '
                  'https://github.com/xinlin-z/keepy\n'
-                 'Author\'s python note blog: '
+                 'author\'s python note blog: '
                  'https://www.pynote.net'
     )
-    parser.add_argument('-p', '--path', required=True,  
-            help='path to folder contains those files')
+    parser.add_argument('-p', '--path', required=True,
+            help='specify the working path')
     parser.add_argument('-y', '--yes', action='store_true',
-            help='say Yes automatically while delete confirmation')
-    parser.add_argument('-f', '--filereg', required=True, 
-            help='file name re expression called by re.search '
-                 'to group candidate files')
+            help='say Yes automatically while delete process')
+
+    fType = parser.add_mutually_exclusive_group(required=True)
+    fType.add_argument('--refile', metavar='RE',
+                    help='regular expression for files')
+    fType.add_argument('--refolder', metavar='RE',
+                    help='regular expression for folders')
+
     timeType = parser.add_mutually_exclusive_group(required=True)
-    timeType.add_argument('--day', type=pInt, 
-            help='keep the last x days files')
-    timeType.add_argument('--month', type=pInt, 
-            help='keep the last x months files')
-    timeType.add_argument('--year', type=pInt, 
-            help='keep the last x years files')
+    timeType.add_argument('--day', type=pInt,
+            help='keep the stuff of last x days')
+    timeType.add_argument('--month', type=pInt,
+            help='keep the stuff of last x months')
+    timeType.add_argument('--year', type=pInt,
+            help='keep the stuff of last x years')
+
     args = parser.parse_args()
     if (not os.path.exists(args.path)
           or not S_ISDIR(os.stat(args.path).st_mode)):
         print('Path must be existed, and should not be a file.')
         sys.exit(1)
-    if args.day is not None: 
+    if args.day is not None:
         _timeType = 'day'; distance = args.day
-    if args.month is not None: 
+    if args.month is not None:
         _timeType = 'month'; distance = args.month
-    if args.year is not None: 
+    if args.year is not None:
         _timeType = 'year'; distance = args.year
-    keepy(args.path, args.yes, args.filereg,
+
+    keepy(args.path, args.yes, args.refile, args.refolder,
           _timeType, distance, date.today())
 
 
