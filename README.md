@@ -1,14 +1,15 @@
-# Keepy
+# keepy
 
-If your server has many files which are generated regularly, such as daily 
-or monthly etc, and you want only to keep some of them which are most close
-to current time. Then keepy is the tool you need to check.
+If your server has many files/folders which are generated regularly, such as
+daily, weekly or monthly etc, and you only want to keep some of them which are
+in a specified time window towards now. Then keepy is the tool you need to
+check, which can delete files/foders automatically and keep what you need!
 
-Keepy only keep those files you specified by an absolute path, a file name
-pattern and a time window. The rest hitted by the file name pattern and in the
-same path would be deleted for you automatically.
+You specify a path, a name pattern and a time window. Keepy searches all the
+files/folders in the path by the name pattern, only those which are in the
+time window would be keeped!
 
-Pay attention, keepy use **file mtime** to make decision!
+Pay attention, keepy use **file/folder mtime** to make decision!
 
 **中文参考 https://www.pynote.net/archives/1797**
 
@@ -18,23 +19,29 @@ You can find a lot usage examples and explanation in help info.
 
     $ python3 keepy.py -h
 
-# Quick Examples 
+# Quick Examples
 
-## Only keep the last 90 days log file
+## only keep the last 90 days log file
 
-    $ python3 keepy.py -p path -f ^www.access.log_ --day 90
+    $ python3 keepy.py -p path --refile ^www.access.log_ --day 90
 
-## Only keep the last 10 months db file
+-- day 0 means only keep today's.
 
-    $ python3 keepy.py -p path -f pynote.db.gzip$ --month 10
+## only keep the last 10 months db file
 
-## Only keep this year's file
+    $ python3 keepy.py -p path --refile pynote.db.gzip$ --month 10
 
-    $ python3 keepy.py -p path -f file_name_pattern --year 0
+--month 0 means only keep current month's.
 
---year 0 means only keep current year's files.
+## only keep this year's file
 
---month 0 means only keep files of this month.
+    $ python3 keepy.py -p path --refile file_name_pattern --year 0
+
+--year 0 means only keep files of this year.
+
+## do with folders
+
+    $ python3 keepy.py -p path --refolder folder_name_pattern --day N
 
 ## say Yes automatically
 
