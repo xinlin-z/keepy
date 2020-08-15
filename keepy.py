@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import sys
 import argparse
 import re
 import shutil
@@ -142,14 +141,16 @@ def main():
     args = parser.parse_args()
     if (not os.path.exists(args.path)
           or not S_ISDIR(os.stat(args.path).st_mode)):
-        print('Path must be existed, and should not be a file.')
-        sys.exit(1)
+        raise ValueError('Path must be existed, and should not be a file.')
     if args.day is not None:
-        _timeType = 'day'; distance = args.day
+        _timeType = 'day';
+        distance = args.day
     if args.month is not None:
-        _timeType = 'month'; distance = args.month
+        _timeType = 'month';
+        distance = args.month
     if args.year is not None:
-        _timeType = 'year'; distance = args.year
+        _timeType = 'year';
+        distance = args.year
 
     keepy(args.path, args.yes, args.refile, args.refolder,
           _timeType, distance, date.today())
