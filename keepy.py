@@ -9,23 +9,23 @@ from datetime import date
 
 
 # contants
-VER = 'keepy V0.03\n'\
-      "Automatically delete files or folders, only keep(y) what you need!"
+_VER = 'keepy V0.04\n'\
+       "Automatically delete files or folders, only keep(y) what you need!"
 
 
 def keepy(path, yes, refile, refolder, timeType, distance, today):
     delist = []
-    _tstr = 'files' if refile else 'folders'
+    typeStr = 'files' if refile else 'folders'
     for f in os.listdir(path):
         if refile:
-            # skip folders and search failed
+            # skip folders and pattern failure
             pathname = os.path.join(path, f)
             if S_ISDIR(os.stat(pathname).st_mode):
                 continue
             if not re.search(refile, f):
                 continue
-        if refolder:
-            # skip files and search failed
+        else:  # refolder
+            # skip files and pattern failure
             pathname = os.path.join(path, f)
             if not S_ISDIR(os.stat(pathname).st_mode):
                 continue
@@ -36,34 +36,49 @@ def keepy(path, yes, refile, refolder, timeType, distance, today):
         if timeType == 'day':
             if (today - f_mtime).days > distance:
                 delist.append(pathname)
-        if timeType == 'month':
+        elif timeType == 'month':
             if ((today.year-f_mtime.year)*12
                   + (today.month - f_mtime.month)) > distance:
                 delist.append(pathname)
-        if timeType == 'year':
+        elif timeType == 'year':
             if (today.year - f_mtime.year) > distance:
                 delist.append(pathname)
+        else:  # last N
+            delist.append(pathname)
     else:
+        # for last N
+        if timeType == 'last':
+            if distance != 0:
+                if len(delist) <= distance:
+                    delist = []
+                else:
+                    delist.sort(key=lambda x:os.path.getmtime(x))
+                    delist = delist[:len(delist)-distance]
+            # if idstance == 0, keep all stuff in delist by default.
+        # delete process
         if len(delist) == 0:
             print('Nothing needs to be deleted. Keep them all.')
             return
-        # delete process
         delist.sort()
-        print('['+str(len(delist))+ '] %s in the delete list:' % _tstr)
+        print('['+str(len(delist))+ '] %s in the delete list:' % typeStr)
         for item in delist:
             print(os.path.abspath(item))
         if yes:
-            print('Are you sure to delete all %s (Yes/...)?Yes' % _tstr)
+            print('Are you sure to delete all %s (Yes/...)?Yes' % typeStr)
             for item in delist:
-                if refile: os.remove(item)
-                if refolder: shutil.rmtree(item)
+                if refile:
+                    os.remove(item)
+                else:
+                    shutil.rmtree(item)
             print('Delete Complete Automatically!')
         else:
-            confirm = input('Are you sure to delete all %s (Yes/...)?'%_tstr)
+            confirm = input('Are you sure to delete all %s (Yes/...)?'%typeStr)
             if re.match('Yes$', confirm.strip()):
                 for item in delist:
-                    if refile: os.remove(item)
-                    if refolder: shutil.rmtree(item)
+                    if refile:
+                        os.remove(item)
+                    else:
+                        shutil.rmtree(item)
                 print('Delete Complete!')
             else:
                 print('Delete Aborted!')
@@ -74,7 +89,7 @@ def pInt(string):
         num = int(string)
         if num < 0:
             raise argparse.ArgumentTypeError(
-                        'Here must be a positive integer.')
+                        'here must be a positive integer.')
     except argparse.ArgumentTypeError:
         raise
     except Exception as e:
@@ -86,7 +101,7 @@ def pInt(string):
 def main():
     parser = argparse.ArgumentParser(
         formatter_class = argparse.RawDescriptionHelpFormatter,
-        description = VER + textwrap.dedent('''\n
+        description = _VER + textwrap.dedent('''\n
 
         Usage Examples:
 
@@ -113,12 +128,18 @@ def main():
             $ python3 keepy.py -p path -y --refile pattern --month 3
             $ python3 keepy.py -p path -yes --refolder pattern --month 3
             -y or --yes option can say Yes automatically for you, be careful.
+
+        5), keep the last 6 files/folders
+            $ python3 keepy.py -p path --refile pattern --last 6
+            $ python3 keepy.py -p path --refolder pattern --last 6
+            --last 0 means delete all matches.
         '''),
         epilog = 'keepy project page: '
                  'https://github.com/xinlin-z/keepy\n'
                  'author\'s python note blog: '
                  'https://www.pynote.net'
     )
+    parser.add_argument('-V', action='version', version=_VER)
     parser.add_argument('-p', '--path', required=True,
             help='specify the working path')
     parser.add_argument('-y', '--yes', action='store_true',
@@ -132,11 +153,13 @@ def main():
 
     timeType = parser.add_mutually_exclusive_group(required=True)
     timeType.add_argument('--day', type=pInt,
-            help='keep the stuff of last x days')
+            help='only keep the stuff of last x days')
     timeType.add_argument('--month', type=pInt,
-            help='keep the stuff of last x months')
+            help='only keep the stuff of last x months')
     timeType.add_argument('--year', type=pInt,
-            help='keep the stuff of last x years')
+            help='only keep the stuff of last x years')
+    timeType.add_argument('--last', type=pInt, metavar='N',
+            help='only keep the last N stuff')
 
     args = parser.parse_args()
     if (not os.path.exists(args.path)
@@ -151,6 +174,9 @@ def main():
     if args.year is not None:
         _timeType = 'year';
         distance = args.year
+    if args.last is not None:
+        _timeType = 'last';
+        distance = args.last
 
     keepy(args.path, args.yes, args.refile, args.refolder,
           _timeType, distance, date.today())

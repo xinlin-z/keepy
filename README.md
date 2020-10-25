@@ -47,9 +47,18 @@ You can find a lot usage examples and explanation in help info.
 
 ## say Yes automatically
 
-    $ python3 keepy.py -p path -f pattern --day 0
+    $ python3 keepy.py -p path --refile pattern --day 0
+
+## keep the last N stuff
+
+    $ python3 keepy.py -p path --refolder pattern --last N
+
+if N == 0, delete all matches.
 
 # Version
+
+* **2020-10-25 V0.04**
+    - add --last N parameter which could delete all matches
 
 * **2020-07-09 V0.03**
     - add --refolder option to keep folders
