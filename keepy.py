@@ -37,8 +37,8 @@ def keepy(path, yes, refile, refolder, timeType, distance, today):
             if (today - f_mtime).days > distance:
                 delist.append(pathname)
         elif timeType == 'month':
-            if ((today.year-f_mtime.year)*12
-                  + (today.month - f_mtime.month)) > distance:
+            if ((today.year-f_mtime.year)*12 +
+                    (today.month - f_mtime.month)) > distance:
                 delist.append(pathname)
         elif timeType == 'year':
             if (today.year - f_mtime.year) > distance:
@@ -89,7 +89,7 @@ def pInt(string):
         num = int(string)
         if num < 0:
             raise argparse.ArgumentTypeError(
-                        'here must be a positive integer.')
+                  'here must be a positive integer.')
     except argparse.ArgumentTypeError:
         raise
     except Exception as e:
@@ -100,8 +100,8 @@ def pInt(string):
 
 def main():
     parser = argparse.ArgumentParser(
-        formatter_class = argparse.RawDescriptionHelpFormatter,
-        description = _VER + textwrap.dedent('''\n
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=_VER + textwrap.dedent('''\n
 
         Usage Examples:
 
@@ -133,49 +133,50 @@ def main():
             $ python3 keepy.py -p path --refile pattern --last 6
             $ python3 keepy.py -p path --refolder pattern --last 6
             --last 0 means delete all matches.
+
         '''),
-        epilog = 'keepy project page: '
-                 'https://github.com/xinlin-z/keepy\n'
-                 'author\'s python note blog: '
-                 'https://www.pynote.net'
+        epilog='keepy project page: '
+               'https://github.com/xinlin-z/keepy\n'
+               'author\'s python note blog: '
+               'https://www.pynote.net'
     )
     parser.add_argument('-V', action='version', version=_VER)
     parser.add_argument('-p', '--path', required=True,
-            help='specify the working path')
+                        help='specify the working path')
     parser.add_argument('-y', '--yes', action='store_true',
-            help='say Yes automatically while delete process')
+                        help='say Yes automatically while delete process')
 
     fType = parser.add_mutually_exclusive_group(required=True)
     fType.add_argument('--refile', metavar='RE',
-                    help='regular expression for files')
+                       help='regular expression for files')
     fType.add_argument('--refolder', metavar='RE',
-                    help='regular expression for folders')
+                       help='regular expression for folders')
 
     timeType = parser.add_mutually_exclusive_group(required=True)
     timeType.add_argument('--day', type=pInt,
-            help='only keep the stuff of last x days')
+                          help='only keep the stuff of last x days')
     timeType.add_argument('--month', type=pInt,
-            help='only keep the stuff of last x months')
+                          help='only keep the stuff of last x months')
     timeType.add_argument('--year', type=pInt,
-            help='only keep the stuff of last x years')
+                          help='only keep the stuff of last x years')
     timeType.add_argument('--last', type=pInt, metavar='N',
-            help='only keep the last N stuff')
+                          help='only keep the last N stuff')
 
     args = parser.parse_args()
-    if (not os.path.exists(args.path)
-          or not S_ISDIR(os.stat(args.path).st_mode)):
+    if (not os.path.exists(args.path) or
+            not S_ISDIR(os.stat(args.path).st_mode)):
         raise ValueError('Path must be existed, and should not be a file.')
     if args.day is not None:
-        _timeType = 'day';
+        _timeType = 'day'
         distance = args.day
     if args.month is not None:
-        _timeType = 'month';
+        _timeType = 'month'
         distance = args.month
     if args.year is not None:
-        _timeType = 'year';
+        _timeType = 'year'
         distance = args.year
     if args.last is not None:
-        _timeType = 'last';
+        _timeType = 'last'
         distance = args.last
 
     keepy(args.path, args.yes, args.refile, args.refolder,
