@@ -6,14 +6,39 @@ import shutil
 import textwrap
 from stat import *
 from datetime import date
+import subprocess
 
 
 # contants
-_VER = 'keepy V0.04\n'\
+_VER = 'keepy V0.05\n'\
        "Automatically delete files or folders, only keep(y) what you need!"
 
 
-def keepy(path, yes, refile, refolder, timeType, distance, today):
+def shell(cmd, cwd=None):
+    """Run a shell cmd, return stdout+stderr, or raise, no need 2>&1."""
+    proc = subprocess.run(cmd, shell=True, cwd=cwd,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if proc.returncode != 0:
+        raise ChildProcessError(proc.stdout.decode())
+    return proc.stdout.decode()
+
+
+def du_size(pathname, unit='b'):
+    """Return size of pathname in unit format by using du command.
+
+    pathname can be a file or folder (os.path.getsize cannot be used here),
+    unit can be 'b|B' (default), 'k|K', 'm|M' or 'g|G'.
+    return int if unit is b, else return float.
+    """
+    bnum = int(shell('du -bs %s | cut -f 1'%pathname))
+    if unit in ('b','B'): return bnum  # int
+    elif unit in ('k','K'): return bnum/1024
+    elif unit in ('m','M'): return bnum/1024**2
+    elif unit in ('g','G'): return bnum/1024**3
+    else: raise ValueError('unit parameter error')
+
+
+def keepy(path, yes, refile, refolder, mType, distance, today):
     delist = []
     typeStr = 'files' if refile else 'folders'
     for f in os.listdir(path):
@@ -33,32 +58,42 @@ def keepy(path, yes, refile, refolder, timeType, distance, today):
                 continue
         # get mtime and compare with now
         f_mtime = date.fromtimestamp(os.path.getmtime(pathname))
-        if timeType == 'day':
+        if mType == 'day':
             if (today - f_mtime).days > distance:
                 delist.append(pathname)
-        elif timeType == 'month':
+        elif mType == 'month':
             if ((today.year-f_mtime.year)*12 +
                     (today.month - f_mtime.month)) > distance:
                 delist.append(pathname)
-        elif timeType == 'year':
+        elif mType == 'year':
             if (today.year - f_mtime.year) > distance:
                 delist.append(pathname)
-        else:  # last N
+        else:  # last N or sizelimit
             delist.append(pathname)
     else:
-        # for last N
-        if timeType == 'last':
+        # last N
+        if mType == 'last':
             if distance != 0:
                 if len(delist) <= distance:
                     delist = []
                 else:
                     delist.sort(key=lambda x:os.path.getmtime(x))
                     delist = delist[:len(delist)-distance]
-            # if idstance == 0, keep all stuff in delist by default.
+            # if N == 0, keep all stuff in delist.
+        # sizelimit
+        elif mType == 'sizelimit':
+            delist.sort(key=lambda x:os.path.getmtime(x))
+            while distance>0 and len(delist)>0:
+                size = du_size(delist[-1])
+                if distance >= size:
+                    delist.pop()
+                distance -= size
+            # if sizelimit == 0, keep all stuff to delete.
         # delete process
         if len(delist) == 0:
             print('Nothing needs to be deleted. Keep them all.')
             return
+        # sorted by name
         delist.sort()
         print('['+str(len(delist))+ '] %s in the delete list:' % typeStr)
         for item in delist:
@@ -152,35 +187,40 @@ def main():
     fType.add_argument('--refolder', metavar='RE',
                        help='regular expression for folders')
 
-    timeType = parser.add_mutually_exclusive_group(required=True)
-    timeType.add_argument('--day', type=pInt,
-                          help='only keep the stuff of last x days')
-    timeType.add_argument('--month', type=pInt,
-                          help='only keep the stuff of last x months')
-    timeType.add_argument('--year', type=pInt,
-                          help='only keep the stuff of last x years')
-    timeType.add_argument('--last', type=pInt, metavar='N',
-                          help='only keep the last N stuff')
+    mType = parser.add_mutually_exclusive_group(required=True)
+    mType.add_argument('--day', type=pInt,
+                       help='only keep the stuff of last x days')
+    mType.add_argument('--month', type=pInt,
+                       help='only keep the stuff of last x months')
+    mType.add_argument('--year', type=pInt,
+                       help='only keep the stuff of last x years')
+    mType.add_argument('--last', type=pInt, metavar='N',
+                       help='only keep the last N stuff')
+    mType.add_argument('--sizelimit', type=pInt, metavar='BYTES',
+                       help='size limit in bytes')
 
     args = parser.parse_args()
     if (not os.path.exists(args.path) or
             not S_ISDIR(os.stat(args.path).st_mode)):
         raise ValueError('Path must be existed, and should not be a file.')
     if args.day is not None:
-        _timeType = 'day'
+        _mType = 'day'
         distance = args.day
     if args.month is not None:
-        _timeType = 'month'
+        _mType = 'month'
         distance = args.month
     if args.year is not None:
-        _timeType = 'year'
+        _mType = 'year'
         distance = args.year
     if args.last is not None:
-        _timeType = 'last'
+        _mType = 'last'
         distance = args.last
+    if args.sizelimit is not None:
+        _mType = 'sizelimit'
+        distance = args.sizelimit
 
     keepy(args.path, args.yes, args.refile, args.refolder,
-          _timeType, distance, date.today())
+          _mType, distance, date.today())
 
 
 if __name__ == '__main__':
