@@ -16,12 +16,14 @@
 
 If your server has many files/folders which are generated regularly, such as
 daily, weekly or monthly etc, and you only want to keep some of them which are
-in a specified time window towards now. Then keepy is the tool you need to
-check, which can delete files/folders automatically and keep what you need!
+in a specified time window towards now, or to set a space size limit. Then
+keepy is the tool you need to check, which can delete files/folders
+automatically and keep what you need!
 
-You should specify a path, a name pattern and a time window. Keepy searches 
-all the files/folders in the path by the name pattern, only those which are in 
-the time window would be keeped!
+You should specify a path, a name pattern and a time window or size limit.
+Keepy searches all the files/folders in the path by the name pattern, only
+those which are in the time window, or within the size limit (in descent order
+of mtime) would be kept!
 
 Pay attention, keepy use **file/folder mtime** to make decision!
 
@@ -80,8 +82,8 @@ It's very useful to keep a sort of content under a limited max size. If BYTES
 # Version
 
 * **2021-01-27 V0.05**
-    -- add --sizelimit option
-    -- add tox.ini for flake8
+    - add --sizelimit option
+    - add tox.ini for flake8
 
 * **2020-10-25 V0.04**
     - add --last N parameter which could delete all matches

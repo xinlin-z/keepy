@@ -169,6 +169,11 @@ def main():
             $ python3 keepy.py -p path --refolder pattern --last 6
             --last 0 means delete all matches.
 
+        6), set size limit for files/folders
+            $ python3 keepy.py -p path --refile pattern --sizelimit BYTES
+            $ python3 keepy.py -p path --refolder pattern --sizelimit BYTES
+            --sizelimit 0 means no space reserved, delete all matches.
+
         '''),
         epilog='keepy project page: '
                'https://github.com/xinlin-z/keepy\n'
