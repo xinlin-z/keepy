@@ -1,3 +1,17 @@
+# Contents
+
+* [keepy](#keepy)
+* [How to Use](#How-to-Use)
+* [Quick Examples](#Quick-Examples)
+    * [keep the last 90 days log file](#keep-the-last-90-days-log-file)
+    * [keep the last 10 months db file](#keep-the-last-10-months-db-file)
+    * [keep this year's file](#keep-this-years-file)
+    * [keep folders](#keep-folders)
+    * [say Yes automatically](#say-Yes-automatically)
+    * [keep the last N stuff](#keep-the-last-N-stuff)
+    * [set size limit](#set-size-limit)
+* [Version](#Version)
+
 # keepy
 
 If your server has many files/folders which are generated regularly, such as
@@ -43,7 +57,8 @@ You can find a lot usage examples and explanation in help info.
 
     $ python3 keepy.py -p path --refolder folder_name_pattern --day N
     
---refolder means folder's regular expression.
+--refolder means folder's regular expression. All the other parameters are
+the same with --refile.
 
 ## say Yes automatically
 
@@ -53,9 +68,20 @@ You can find a lot usage examples and explanation in help info.
 
     $ python3 keepy.py -p path --refolder pattern --last N
 
-if N == 0, delete all matches.
+If N == 0, delete all matches.
+
+## set size limit
+
+    $ python3 keepy.py -p path --refile pattern --sizelimit BYTES
+
+It's very useful to keep a sort of content under a limited max size. If BYTES
+== 0, delete all matches.
 
 # Version
+
+* **2021-01-27 V0.05**
+    -- add --sizelimit option
+    -- add tox.ini for flake8
 
 * **2020-10-25 V0.04**
     - add --last N parameter which could delete all matches
